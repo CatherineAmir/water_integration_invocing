@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="HugeImport_form_view" model="ir.ui.view">
+            <field name="name">Sita.HugeImport.form</field>
+            <field name="model">sita_inv.huge_import</field>
+            <field name="arch" type="xml">
+                <form string="Bulk Import">
+                    <header>
+                        <button name="first_import" string="Import All" type="object" class="btn-primary" states="not_imported"/>
+                        <button name="partially_import" string="Import The Rest" type="object" class="btn-primary" states="partially_imported"/>
+                        <button name="exceptional_import"  string="Exceptional Import " type="object" class="btn-primary" states="completely_imported"/>
+
+
+                        <field name="state" widget="statusbar"/>
+                    </header>
+
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="sheet_date"/>
+                            <h1>
+                                <field name="sheet_date" readonly="1"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="invoice_type" widget="selection_badge" />
+                                <field name="name" autocomplete="off" />
+                                <field name="month" />
+
+
+                            </group>
+                            <group>
+                                <field name="total_invoices"/>
+                                <field name="total_posted"/>
+                                <field name="total_not_imported"/>
+                            </group>
+
+                        </group>
+                        <notebook>
+                        <page string="Imported" name="imported">
+                            <field name="summary_ids_posted"/>
+
+                        </page>
+                        <page string="Not Imported" name="not_imported">
+                             <field name="summary_ids_not_imported"/>
+
+                        </page>
+                    </notebook>
+                    </sheet>
+
+                </form>
+            </field>
+        </record>
+
+        <record id="HugeImport_tree_view" model="ir.ui.view">
+            <field name="name">sita.HugeImport.tree</field>
+            <field name="model">sita_inv.huge_import</field>
+            <field name="arch" type="xml">
+                <tree string="ModelTitle">
+                    <field name="name"  decoration-danger="state =='not_imported'" decoration-success="state =='completely_imported'"
+                    decoration-warning="state =='partially_imported'"/>
+                    <field name="month"  decoration-danger="state =='not_imported'" decoration-success="state =='completely_imported'"
+                    decoration-warning="state =='partially_imported'"/>
+
+
+                    <field name="sheet_date" decoration-danger="state =='not_imported'" decoration-success="state =='completely_imported'"
+                    decoration-warning="state =='partially_imported'"/>
+                    <field name="state" decoration-danger="state =='not_imported'" decoration-success="state =='completely_imported'"
+                    decoration-warning="state =='partially_imported'"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="HugeImport_search_view" model="ir.ui.view">
+            <field name="name">sita_inv.HugeImport.search</field>
+            <field name="model">sita_inv.huge_import</field>
+            <field name="arch" type="xml">
+                <search string="ModelTitle">
+                    <group expand="1" string="Group By">
+                        <field name="name"/>
+
+                        <filter string="Month" name="Month" domain="[]"
+                                context="{'group_by':'month'}"/>
+
+                        <filter string="State" name="state" domain="[]"
+                                context="{'group_by':'state'}"/>
+
+                        <filter string="Not Imported" name="not_imported" context="{}"
+                                domain="[('state','=','not_imported')]"/>
+
+                        <filter string="Partially Imported" name="partially_imported" context="{}"
+                                domain="[('state','=','partially_imported')]"/>
+                        <filter string="Completely Imported" name="completely_imported" context="{}"
+                                domain="[('state','=','completely_imported')]"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="HugeImport_act_window" model="ir.actions.act_window">
+            <field name="name">Huge Import</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">sita_inv.huge_import</field>
+           <field name="view_mode">tree,form</field>
+
+        </record>
+            <menuitem id="huge_import" name="Import"
+              parent="sita-e-invoicing.main_e_inv_menu" sequence="55"/>
+        <menuitem name="Import Invoices" id="HugeImport_menu" parent="huge_import" action="HugeImport_act_window" sequence="1"/>
+
+
+    </data>
+</odoo>

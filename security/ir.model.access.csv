@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_water_huge_import,access_water_huge_import,model_sita_inv_huge_import,,1,1,1,1
+access_sita_water_inv_summary,access_sita_water_inv_summary,model_sita_inv_summary,,1,1,1,1

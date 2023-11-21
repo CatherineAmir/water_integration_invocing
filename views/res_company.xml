@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="water_integration_company_form" model="ir.ui.view">
+        <field name="name">water_integration.company.from</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="sita-e-invoicing.e_inv_company_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='is_water']" position="after">
+
+
+
+                 <field name="database_type"
+                        attrs="{'readonly' : [('state','=','launch')],'invisible':[('is_water','=',False)],'required':[('is_water','=',True)]}"/>
+
+
+            </xpath>
+
+
+        </field>
+    </record>
+    </data>
+</odoo>

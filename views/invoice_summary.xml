@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="summary_form_view" model="ir.ui.view">
+            <field name="name">sita.summary.form</field>
+            <field name="model">sita.inv_summary</field>
+            <field name="arch" type="xml">
+                <form string="Invoice Summary" edit="false">
+                    <header>
+                        <button name="import_one_invoice" type="object" string="Import This Invoice" class="btn-primary"
+                                attrs="{'invisible':[('state','!=','not_imported')]}"/>
+                        <field name="state" widget="statusbar"/>
+
+
+                    </header>
+
+                    <sheet>
+
+                        <div name="smart_button" class="oe_button_box">
+                            <button class="btn oe_stat_button"
+                                    type="object"
+                                    name="get_all_invoices"
+                                    style="border-right: 1px solid;"
+                                    icon="fa-pencil-square-o"
+                                    string="All Invoices" widget="statinfo"/>
+                        </div>
+
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1>
+                                <field name="name" placeholder="Invoice_id"/>
+
+                            </h1>
+
+                        </div>
+
+                        <group>
+
+
+                            <field name="error" attrs="{'invisible':[('error','=',False)]}"/>
+                        </group>
+                        <group>
+                            <field name="import_id" invsible="1"/>
+							<field name="customer_name"/>
+                            <field name="invoice_date"/>
+							<field name="invoice_counts"/>
+                        </group>
+
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="summary_tree_view" model="ir.ui.view">
+            <field name="name">sita.summary.tree</field>
+            <field name="model">sita.inv_summary</field>
+            <field name="arch" type="xml">
+                <tree string="summary" create="false">
+                    <field name="name" decoration-muted="state=='cancelled'" decoration-danger="state =='not_imported'"
+                           decoration-success="state =='valid'" decoration-info="state =='posted'"
+                           decoration-warning="state =='invalid'"/>
+						   
+                    <field name="state" decoration-muted="state=='cancelled'" decoration-danger="state =='not_imported'"
+                           decoration-success="state =='valid'" decoration-info="state =='posted'"
+                           decoration-warning="state =='invalid'"/>
+					<field name="invoice_counts" decoration-muted="state=='cancelled'" decoration-danger="state =='not_imported'"
+                           decoration-success="state =='valid'" decoration-info="state =='posted'"
+                           decoration-warning="state =='invalid'"/>
+				   <field name="customer_name" decoration-muted="state=='cancelled'" decoration-danger="state =='not_imported'"
+				   decoration-success="state =='valid'" decoration-info="state =='posted'"
+				   decoration-warning="state =='invalid'"/>
+				   <field name="error" decoration-muted="state=='cancelled'" decoration-danger="state =='not_imported'"
+				   decoration-success="state =='valid'" decoration-info="state =='posted'"
+				   decoration-warning="state =='invalid'"/>
+                    <button name="import_one_invoice" type="object" string="Import This Invoice" class="btn-primary"
+                            attrs="{'invisible':[('state','!=','not_imported')]}"/>
+
+                </tree>
+            </field>
+        </record>
+
+        <record id="summary_search_view" model="ir.ui.view">
+            <field name="name">sita.summary.search</field>
+            <field name="model">sita.inv_summary</field>
+            <field name="arch" type="xml">
+                <search string="search Summary">
+                    <field name="name"/>
+                    <group expand="1" string="Group By">
+
+                        <filter string="State" name="state" domain="[]"
+                                context="{'group_by':'state'}"/>
+						<filter string="Import Id" name="import" domain="[]"
+						context="{'group_by':'import_id'}"/>
+						
+						<filter string="Error" name="Error" domain="[]"
+						context="{'group_by':'error'}"/>
+						
+                        
+						
+						
+						
+						<filter string="Not Imported" name="not_imported" context="{}"
+                                domain="[('state','=','not_imported')]"/>
+						<filter string="draft" name="draft" context="{}"
+                                domain="[('state','=','draft')]"/>
+                        <filter string="Posted" name="posted" context="{}"
+                                domain="[('state','=','posted')]"/>
+
+                        <filter string="Pending" name="pending" context="{}"
+                                domain="[('state','=','pending')]"/>
+
+                        <filter string="Valid" name="valid" context="{}"
+                                domain="[('state','=','valid')]"/>
+                        <filter string="Invalid" name="invalid" context="{}"
+                                domain="[('state','=','invalid')]"/>
+
+                        <filter string="Cancelled" name="cancelled" context="{}"
+                                domain="[('state','=','cancelled')]"/>
+						
+						
+
+
+                    </group>
+
+                </search>
+            </field>
+        </record>
+
+        <record id="summary_act_window" model="ir.actions.act_window">
+            <field name="name">Summary Action</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">sita.inv_summary</field>
+
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'group_by': ['state']}</field>
+
+
+        </record>
+
+        <menuitem name="Invoice Summary" id="summary_menu" parent="huge_import" action="summary_act_window"
+                  sequence="0"/>
+
+    </data>
+</odoo>
