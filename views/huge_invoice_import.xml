@@ -11,7 +11,8 @@
                         <button name="first_import" string="Import All" type="object" class="btn-primary" states="not_imported"/>
                         <button name="partially_import" string="Import The Rest" type="object" class="btn-primary" states="partially_imported"/>
                         <button name="exceptional_import"  string="Exceptional Import " type="object" class="btn-primary" states="completely_imported"/>
-
+						 <button name="get_invoices_discount"  string="Credit Notes" type="object" class="btn-primary"
+                                attrs="{'invisible':['|',('database_set','!=','consumption'),('invoice_type','=','invoice')]} "/>
 
                         <field name="state" widget="statusbar"/>
                     </header>
@@ -25,10 +26,10 @@
                         </div>
                         <group>
                             <group>
-                                <field name="invoice_type" widget="selection_badge" />
-                                <field name="name" autocomplete="off" />
-                                <field name="month" />
-
+                                <field name="invoice_type" attrs="{'required':[('database_set','=','consumption')],'readonly':[('database_set','!=','consumption')]}"/>
+                                <field name="name" autocomplete="off" attrs="{'readonly':[('database_set','=','consumption')]}"/>
+                                <field name="month" attrs="{'required':[('database_set','=','consumption')],'readonly':[('database_set','!=','consumption')]}"/>
+								<field name="database_set" widget="selection_badge" readonly="1"/>
 
                             </group>
                             <group>
@@ -48,9 +49,8 @@
 
                         </page>
                     </notebook>
-
                     </sheet>
-                         <div class="oe_chatter">
+					 <div class="oe_chatter">
                         <field name="message_follower_ids" widget="mail_followers"/>
                         <field name="message_ids" widget="mail_thread"/>
                     </div>
@@ -67,6 +67,8 @@
                     <field name="name"  decoration-danger="state =='not_imported'" decoration-success="state =='completely_imported'"
                     decoration-warning="state =='partially_imported'"/>
                     <field name="month"  decoration-danger="state =='not_imported'" decoration-success="state =='completely_imported'"
+                    decoration-warning="state =='partially_imported'"/>
+					<field name="invoice_type"  decoration-danger="state =='not_imported'" decoration-success="state =='completely_imported'"
                     decoration-warning="state =='partially_imported'"/>
 
 
