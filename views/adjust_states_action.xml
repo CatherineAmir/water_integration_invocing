@@ -16,8 +16,8 @@
 		
 		<record id="action_re_import" model="ir.actions.server">
             <field name="name">Re import</field>
-            <field name="model_id" ref="sita-e-invoicing.model_sita_inv_summary"/>
-            <field name="binding_model_id" ref="sita-e-invoicing.model_sita_inv_summary"/>
+            <field name="model_id" ref="menofia_integration_files.model_sita_inv_summary"/>
+            <field name="binding_model_id" ref="menofia_integration_files.model_sita_inv_summary"/>
             <field name="binding_view_types">list</field>
             <field name="state">code</field>
             <field name="code">action = records.server_action_import()</field>
@@ -25,8 +25,8 @@
 		
 		<record id="adjust_summary_this" model="ir.actions.server">
             <field name="name">Adjust Summary</field>
-            <field name="model_id" ref="sita-e-invoicing.model_sita_inv_summary"/>
-            <field name="binding_model_id" ref="sita-e-invoicing.model_sita_inv_summary"/>
+            <field name="model_id" ref="menofia_integration_files.model_sita_inv_summary"/>
+            <field name="binding_model_id" ref="menofia_integration_files.model_sita_inv_summary"/>
             <field name="binding_view_types">list,form</field>
             <field name="state">code</field>
             <field name="code">action = records.adjust_this_states()</field>
