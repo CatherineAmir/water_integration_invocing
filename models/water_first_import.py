@@ -565,7 +565,7 @@ class BulkImport(models.Model):
         """
 
         #
-        token = self.env.company.get_token()
+
         preplink = self.env.company.api_link
 
         try:
@@ -574,7 +574,7 @@ class BulkImport(models.Model):
                     'Accept': "application/json",
                     'Accept-Language': "en",
                     'Content-type': "application/json",
-                    'Authorization': 'Bearer ' + token,
+                    # 'Authorization': 'Bearer ' + token,
                 }
         except Exception:
             return False
@@ -590,7 +590,8 @@ class BulkImport(models.Model):
         url = preplink + "/api/v1.0/codetypes/" + codeType + "/codes/" + str(product_code)
 
         try:
-            getting_all = requests.get(url, headers=header, verify=False)
+            # getting_all = requests.get(url, headers=header, verify=False)
+            getting_all = self.env.company.call_api_get(header,url,"Search Product")
 
 
         except Exception:
