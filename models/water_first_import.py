@@ -407,9 +407,12 @@ class BulkImport(models.Model):
                             e['error_message']).replace('(', '').replace(')', '') + '\n' + '\n'
 
                     s.error = formatted_error
-            s._get_all_invoices()
+
             if s.invoice_counts:
                 s.state = 'draft'
+
+        all_sum._get_all_invoices()
+
 
     def adjust_data(self):
 
@@ -1293,61 +1296,85 @@ class InvSummary(models.Model):
 
     def get_all_invoices(self):
         action = self.env.ref('sita-e-invoicing.sita_action_move_out_invoice_type').read()[0]
-        action['domain'] = ['|', ('name', '=', self.name), ('related_id.name', '=', self.name)]
+        action['domain'] = ['|', ('name', '=', self.name), ('related_id.name', '=', self.name),'|',('active','=',True),("active",'=',False)]
         return action
 
     @api.depends('state')
     def _get_all_invoices(self):
-        for r in self:
-            
-            r.account_move_ids = self.env['account.move'].sudo().with_context(active_test=False).search(
-                ['|', ('name', '=', r.name), ('related_id.name', '=', r.name)])
+        dates=set(self.mapped("import_id.name"))
 
-            r.invoice_counts = len(r.account_move_ids)
-            if r.invoice_counts:
-                pass
+        min_date=min(dates)
+
+        account_move_ids = self.env['account.move'].sudo().with_context(active_test=False).search([("create_date",">=",min_date)])
+        invoice_names=set(account_move_ids.mapped('name'))
+
+        summary_names=set(self.mapped('name'))
+        intersect1=invoice_names.intersection(summary_names)
+
+        all_data=self.env['account.move'].sudo().with_context(active_test=False).search_read([],["id","name","state"])
+        counter=0
+        for r in self:
+            counter += 1
+            _logger.info("counter  %s out of %s",counter,len(self))
+
+            if r.name in intersect1:
+
+                r.invoice_counts=1
+                current_invoice=[i for i in all_data  if i["name"]==r.name ]
+
+                if len(current_invoice)>0:
+                    current_invoice=sorted(current_invoice,key=lambda d:d["id"],reverse=True)
+
+                r.state=current_invoice[0]["state"]
+                r.account_move_ids=[i["id"] for i in current_invoice]
+
+
+
+
             else:
+
                 r.invoice_counts=0
                 r.state='not_imported'
 
     @api.onchange('account_move_ids')
     def adjust_summary_states(self):
-        self._adjust_summary_states()
+        # self._adjust_summary_states()
+        self._get_all_invoices()
 
-    @api.depends('account_move_ids', 'account_move_ids.state')
-    def _adjust_summary_states(self):
-        _logger.info('in _adjust_summary_states')
-        for r in self:
-            r._get_all_invoices()
-            if not  r.invoice_counts and not  r.account_move_ids:
-                r.state = 'not_imported'
-            elif r.account_move_ids and r.invoice_counts:
-                latest_id = max(r.account_move_ids.ids)
-                move = self.env['account.move'].search([('id', '=', latest_id)])
-
-                r.state = move.state
-
-
-            else:
-                _logger.info('something went error')
-    
-    def adjust_this_states(self):
-       
-        for r in self:
-            
-            r._get_all_invoices()
-            if not  r.invoice_counts:
-                r.state = 'not_imported'
-            elif r.account_move_ids and r.invoice_counts:
-                latest_id = max(r.account_move_ids.ids)
-                move = self.env['account.move'].search([('id', '=', latest_id)])
-                
-                r.state = move.state
-               
-
-            else:
-                _logger.info('something went error')
-                
+    # @api.depends('account_move_ids', 'account_move_ids.state')
+    # def _adjust_summary_states(self):
+    #     _logger.info('in _adjust_summary_states')
+    #     for r in self:
+    #         r._get_all_invoices()
+    #         if not  r.invoice_counts and not  r.account_move_ids:
+    #             r.state = 'not_imported'
+    #         elif r.account_move_ids and r.invoice_counts:
+    #             latest_id = max(r.account_move_ids.ids)
+    #             move = self.env['account.move'].search([('id', '=', latest_id)])
+    #
+    #             r.state = move.state
+    #
+    #
+    #         else:
+    #             _logger.info('something went error')
+    #
+    # def adjust_this_states(self):
+    #
+    #     for r in self:
+    #
+    #         ._get_all_invoices()
+    #         if not  r.invoice_counts:
+    #             r.state = 'not_imported'
+    #         elif r.account_move_ids and r.invoice_counts:
+    #             latest_id = max(r.account_move_ids.ids)
+    #             move = self.env['account.move'].search([('id', '=', latest_id)])
+    #
+    #             r.state = move.state
+    #
+    #
+    #         else:
+    #             _logger.info('something went error')
+    #
 
     @api.model
     def init(self):

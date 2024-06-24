@@ -5,8 +5,8 @@ import subprocess
 from decimal import Decimal
 import json
 from asn1crypto import cms, util, algos, x509, core, pem, keys, tsp
-import pkcs11
-from pkcs11 import Attribute, ObjectClass, KeyType, UserAlreadyLoggedIn
+# import pkcs11
+# from pkcs11 import Attribute, ObjectClass, KeyType, UserAlreadyLoggedIn
 import time
 from datetime import datetime, date, timedelta
 import pytz

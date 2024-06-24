@@ -29,7 +29,7 @@
             <field name="binding_model_id" ref="menofia_integration_files.model_sita_inv_summary"/>
             <field name="binding_view_types">list,form</field>
             <field name="state">code</field>
-            <field name="code">action = records.adjust_this_states()</field>
+            <field name="code">action = records.adjust_summary_states()</field>
         </record>
 
     </data>
