@@ -30,6 +30,7 @@
                                 <field name="name" autocomplete="off" attrs="{'readonly':[('database_set','=','consumption')]}"/>
                                 <field name="month" attrs="{'required':[('database_set','=','consumption')],'readonly':[('database_set','!=','consumption')]}"/>
 								<field name="database_set" widget="selection_badge" readonly="1"/>
+								<field name="special_customer" readonly="1"/>
 
                             </group>
                             <group>

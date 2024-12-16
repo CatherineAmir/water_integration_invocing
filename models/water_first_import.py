@@ -1,3 +1,5 @@
+import time
+
 from odoo import fields, models, api, exceptions, _
 from datetime import datetime, date
 import datetime as dt
@@ -8,7 +10,7 @@ import xlrd
 import logging
 import itertools
 import requests
-
+from psycopg2 import OperationalError, errorcodes, errors
 _logger = logging.getLogger(__name__)
 import cx_Oracle
 
@@ -118,7 +120,7 @@ class BulkImport(models.Model):
         self.message_post(body="Start importing")
 
         data_to_test = self.connect_database(self.database_set, self.name, [],[])
-        
+        _logger.info('data_to_testwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww %s', data_to_test)
 
 
         self.error_dict.clear()
@@ -304,8 +306,14 @@ class BulkImport(models.Model):
         _logger.info('line_adjusted')
         self.adjust_invs(all_inv)
         _logger.info('invs_adjusted')
+        self.env.cr.commit()
+        self.env.cr.savepoint()
         self.adjust_summary(all_inv)
+        self.env.cr.commit()
+        self.env.cr.savepoint()
         self.compute_numbers()
+        self.env.cr.commit()
+        self.env.cr.savepoint()
         _logger.info('summary adjusted')
         self.adjust_state()
         _logger.info('adjust_state')
@@ -390,28 +398,36 @@ class BulkImport(models.Model):
                 cur.execute(delete_from, (r.id,))
 
     def adjust_summary(self, names):
+        tries=0
+        MAXTRIES=4
+        while tries<MAXTRIES:
+            try:
 
-        # ###print(self.error_dict)
-        all_sum = self.env['sita.inv_summary'].search([('import_id', '=', self.id),('name','in',names)])
 
-        for s in all_sum:
+                all_sum = self.env['sita.inv_summary'].search([('import_id', '=', self.id),('name','in',names)])
 
-            for k in self.error_dict.keys():
+                for s in all_sum:
 
-                if s.name == k:
+                    for k in self.error_dict.keys():
 
-                    formatted_error = ''
-                    for e in self.error_dict[k]:
-                        formatted_error = formatted_error + '- Column Name :' + str(e['column_name']) + '\n' + \
-                                          '- Value :' + str(e['value']) + '\n' + '- Error Message :' + str(
-                            e['error_message']).replace('(', '').replace(')', '') + '\n' + '\n'
+                        if s.name == k:
 
-                    s.error = formatted_error
+                            formatted_error = ''
+                            for e in self.error_dict[k]:
+                                formatted_error = formatted_error + '- Column Name :' + str(e['column_name']) + '\n' + \
+                                                  '- Value :' + str(e['value']) + '\n' + '- Error Message :' + str(
+                                    e['error_message']).replace('(', '').replace(')', '') + '\n' + '\n'
 
-            if s.invoice_counts:
-                s.state = 'draft'
+                            s.error = formatted_error
 
-        all_sum._get_all_invoices()
+                    if s.invoice_counts:
+                        s.state = 'draft'
+                all_sum._get_all_invoices()
+                break
+
+            except OperationalError :
+                time.sleep(2)
+                self.env.cr.rollback()
 
 
     def adjust_data(self):
@@ -1281,6 +1297,8 @@ class InvSummary(models.Model):
     account_move_ids = fields.Many2many('account.move', compute='_get_all_invoices', store=True, )
     invoice_counts = fields.Integer(compute='_get_all_invoices', store=True,string='invoices')
 
+
+
     def import_one_invoice(self):
         self.import_id.one_import(self.name)
         
@@ -1299,26 +1317,30 @@ class InvSummary(models.Model):
         action['domain'] = ['|', ('name', '=', self.name), ('related_id.name', '=', self.name),'|',('active','=',True),("active",'=',False)]
         return action
 
-    @api.depends('state')
+    
     def _get_all_invoices(self):
+
+        self.env.cr.commit()
+        self.env.cr.savepoint()
         dates=set(self.mapped("import_id.name"))
+        if dates:
+            min_date=min(dates)
 
-        min_date=min(dates)
+            account_move_ids = self.env['account.move'].sudo().with_context(active_test=False).search([("create_date",">=",min_date)])
+        else:
+             account_move_ids = self.env['account.move'].sudo().with_context(active_test=False).search([])
 
-        account_move_ids = self.env['account.move'].sudo().with_context(active_test=False).search([("create_date",">=",min_date)])
         invoice_names=set(account_move_ids.mapped('name'))
-
         summary_names=set(self.mapped('name'))
-        intersect1=invoice_names.intersection(summary_names)
-
+        intersect=invoice_names.intersection(summary_names)
         all_data=self.env['account.move'].sudo().with_context(active_test=False).search_read([],["id","name","state"])
+
         counter=0
         for r in self:
             counter += 1
             _logger.info("counter  %s out of %s",counter,len(self))
 
-            if r.name in intersect1:
-
+            if r.name in intersect:
                 r.invoice_counts=1
                 current_invoice=[i for i in all_data  if i["name"]==r.name ]
 
@@ -1330,9 +1352,7 @@ class InvSummary(models.Model):
 
 
 
-
             else:
-
                 r.invoice_counts=0
                 r.state='not_imported'
 
@@ -1341,40 +1361,6 @@ class InvSummary(models.Model):
         # self._adjust_summary_states()
         self._get_all_invoices()
 
-    # @api.depends('account_move_ids', 'account_move_ids.state')
-    # def _adjust_summary_states(self):
-    #     _logger.info('in _adjust_summary_states')
-    #     for r in self:
-    #         r._get_all_invoices()
-    #         if not  r.invoice_counts and not  r.account_move_ids:
-    #             r.state = 'not_imported'
-    #         elif r.account_move_ids and r.invoice_counts:
-    #             latest_id = max(r.account_move_ids.ids)
-    #             move = self.env['account.move'].search([('id', '=', latest_id)])
-    #
-    #             r.state = move.state
-    #
-    #
-    #         else:
-    #             _logger.info('something went error')
-    #
-    # def adjust_this_states(self):
-    #
-    #     for r in self:
-    #
-    #         ._get_all_invoices()
-    #         if not  r.invoice_counts:
-    #             r.state = 'not_imported'
-    #         elif r.account_move_ids and r.invoice_counts:
-    #             latest_id = max(r.account_move_ids.ids)
-    #             move = self.env['account.move'].search([('id', '=', latest_id)])
-    #
-    #             r.state = move.state
-    #
-    #
-    #         else:
-    #             _logger.info('something went error')
-    #
 
     @api.model
     def init(self):
